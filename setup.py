@@ -129,7 +129,7 @@ if platform.system() == 'Windows':
 	include_dir = sys.prefix + "\\include\\pysfml\\"
 else:
 	major, minor, _, _ , _ = sys.version_info
-	include_dir = sys.prefix + "/include/python{0}.{1}/sfml/".format(major, minor)
+	include_dir = sys.prefix + "/include/python{0}.{1}/pysfml/".format(major, minor)
 
 # list all relevant headers (find in include/ and src/sfml/)
 # key: directory, value: list of headers to place in the directory
