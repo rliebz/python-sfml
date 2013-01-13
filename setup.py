@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # pySFML - Python bindings for SFML
-# Copyright 2013, Jonathan De Wachter <dewachter.jonathan@gmail.com>,
+# Copyright 2012-2013, Jonathan De Wachter <dewachter.jonathan@gmail.com>,
 #				  Edwin Marshall <emarshall85@gmail.com>
 #
 # This software is released under the LGPLv3 license.
@@ -29,6 +29,29 @@ class PyTest(Command):
 		errno = call([sys.executable, 'runtests.py'])
 		raise SystemExit(errno)
 
+class Cython(Command):
+	user_options = []
+
+	def initialize_options(self): pass
+	def finalize_options(self): pass
+	def run(self):
+		srcdir = 'src/sfml/'
+
+		modules = ['system.pyx', 'window.pyx', 'graphics.pyx', 'audio.pyx',
+				   'network.pyx']
+		if platform.system() != 'Windows': modules.append('x11.pyx')
+
+		for module in modules:
+			try:
+				errno = call('cython --cplus {0}{1} -Iinclude'.format(srcdir, module),
+							 shell=True)
+			except OSError:
+				errno = 1
+				print("Please install cython and try again.")
+			finally:
+				raise SystemExit(errno)
+
+
 # check if cython is needed (if c++ files are generated or not)
 NEED_CYTHON = not all(map(os.path.exists, [
 	'src/sfml/x11.cpp',
@@ -42,23 +65,6 @@ try:
 	USE_CYTHON = NEED_CYTHON or bool(int(os.environ.get('USE_CYTHON', 0)))
 except ValueError:
 	USE_CYTHON = NEED_CYTHON or bool(os.environ.get('USE_CYTHON'))
-
-if USE_CYTHON:
-	try:
-		from Cython.Distutils import build_ext
-	except ImportError:
-		try:
-			if platform.system() != 'Windows':
-				call(["cython", "--cplus", "src/sfml/x11.pyx", "-Iinclude"])
-			call(["cython", "--cplus", "src/sfml/system.pyx", "-Iinclude"])
-			call(["cython", "--cplus", "src/sfml/window.pyx", "-Iinclude"])
-			call(["cython", "--cplus", "src/sfml/graphics.pyx", "-Iinclude"])
-			call(["cython", "--cplus", "src/sfml/audio.pyx", "-Iinclude"])
-			call(["cython", "--cplus", "src/sfml/network.pyx", "-Iinclude"])
-			USE_CYTHON = False
-		except OSError:
-			print("Please install the correct version of cython and run again.")
-			sys.exit(1)
 
 if USE_CYTHON:
 	x11_source = 'src/sfml/x11.pyx'
@@ -173,9 +179,6 @@ kwargs = dict(
 						'Topic :: Games/Entertainment',
 						'Topic :: Multimedia',
 						'Topic :: Software Development :: Libraries :: Python Modules'],
-			cmdclass={'test': PyTest})
-
-if USE_CYTHON:
-	kwargs['cmdclass'].update({'build_ext': build_ext})
+			cmdclass={'test': PyTest, 'build_ext': Cython})
 
 setup(**kwargs)
