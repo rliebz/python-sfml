@@ -15,7 +15,6 @@ import platform
 from subprocess import call
 from distutils.core import setup, Command, Extension
 
-
 # python 2.* compatability
 try: input = raw_input
 except NameError: pass
@@ -29,27 +28,33 @@ class PyTest(Command):
 		errno = call([sys.executable, 'runtests.py'])
 		raise SystemExit(errno)
 
-class Cython(Command):
-	user_options = []
+try:
+	from Cython.Distutils import build_ext as Cython
+except ImportError:
+	from glob import glob
+	class Cython(Command):
+		""" Minimal command that runs 'cython' from the command line,
+			rather than importing the version-specific distutils module
+			included with Cython.
+		"""
+		user_options = []
 
-	def initialize_options(self): pass
-	def finalize_options(self): pass
-	def run(self):
-		srcdir = 'src/sfml/'
+		def initialize_options(self): pass
+		def finalize_options(self): pass
+		def run(self):
+			srcdir = 'src/sfml/'
+			modules = glob(srcdir + '*.pyx')
+			errno = 1
+			if platform.system() == 'Windows': modules.remove('x11.pyx')
 
-		modules = ['system.pyx', 'window.pyx', 'graphics.pyx', 'audio.pyx',
-				   'network.pyx']
-		if platform.system() != 'Windows': modules.append('x11.pyx')
-
-		for module in modules:
-			try:
-				errno = call('cython --cplus {0}{1} -Iinclude'.format(srcdir, module),
-							 shell=True)
-			except OSError:
-				errno = 1
-				print("Please install cython and try again.")
-			finally:
-				raise SystemExit(errno)
+			for module in modules:
+				try:
+					errno = call('cython --cplus {0}{1} -Iinclude'.format(srcdir, module),
+								shell=True)
+				except OSError:
+					print("Please install cython and try again.")
+				finally:
+					raise SystemExit(errno)
 
 
 # check if cython is needed (if c++ files are generated or not)
