@@ -12,32 +12,22 @@
 import sys
 import os
 import platform
+from subprocess import call
+from distutils.core import setup, Command, Extension
 
-try:
-	from setuptools import setup
-	from setuptools.command.test import test
-	from setuptools.extension import Extension
-	USE_TEST=True
-except:
-	from distutils.core import setup, Extension
-	USE_TEST=False
-	
+
 # python 2.* compatability
 try: input = raw_input
 except NameError: pass
 
-if USE_TEST:
-	class PyTest(test):
-		def finalize_options(self):
-			test.finalize_options(self)
-			self.test_args = []
-			self.test_suite = True
+class PyTest(Command):
+	user_options = []
 
-		def run_tests(self):
-			import pytest
-			errno = pytest.main(self.test_args)
-			sys.exit(errno)
-
+	def initialize_options(self): pass
+	def finalize_options(self): pass
+	def run(self):
+		errno = call([sys.executable, 'runtests.py'])
+		raise SystemExit(errno)
 
 # check if cython is needed (if c++ files are generated or not)
 NEED_CYTHON = not all(map(os.path.exists, [
@@ -57,7 +47,6 @@ if USE_CYTHON:
 	try:
 		from Cython.Distutils import build_ext
 	except ImportError:
-		from subprocess import call
 		try:
 			if platform.system() != 'Windows':
 				call(["cython", "--cplus", "src/sfml/x11.pyx", "-Iinclude"])
@@ -147,12 +136,12 @@ for path, subdirs, files in os.walk("src/sfml"):
 	for name in files:
 		if name.endswith(".h"):
 			destinations[include_dir].append(os.path.join(path, name))
-	
+
 # format data (list of tuple)
 data_files = []
 for key in destinations:
 	data_files.append((key, destinations[key]))
-	
+
 with open('README.rst', 'r') as f:
 	long_description = f.read()
 
@@ -160,7 +149,7 @@ if platform.system() == 'Windows':
 	ext_modules=[system, window, graphics, audio, network]
 else:
 	ext_modules=[x11, system, window, graphics, audio, network]
-	
+
 kwargs = dict(
 			name='pySFML',
 			ext_modules=ext_modules,
@@ -184,12 +173,8 @@ kwargs = dict(
 						'Topic :: Games/Entertainment',
 						'Topic :: Multimedia',
 						'Topic :: Software Development :: Libraries :: Python Modules'],
-			cmdclass=dict())
+			cmdclass={'test': PyTest})
 
-if USE_TEST:
-	kwargs['tests_require']=['pytest>=2.3']
-	kwargs['cmdclass'].update({'test': PyTest})
-			
 if USE_CYTHON:
 	kwargs['cmdclass'].update({'build_ext': build_ext})
 
