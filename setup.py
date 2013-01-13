@@ -57,14 +57,16 @@ except ImportError:
 					raise SystemExit(errno)
 
 
+sources = dict(
+	x11 = 'src/sfml/x11.cpp',
+	system = 'src/sfml/system.cpp',
+	window = 'src/sfml/window.cpp',
+	graphics = 'src/sfml/graphics.cpp',
+	audio = 'src/sfml/audio.cpp',
+	network = 'src/sfml/network.cpp')
+
 # check if cython is needed (if c++ files are generated or not)
-NEED_CYTHON = not all(map(os.path.exists, [
-	'src/sfml/x11.cpp',
-	'src/sfml/system.cpp',
-	'src/sfml/window.cpp',
-	'src/sfml/graphics.cpp',
-	'src/sfml/audio.cpp',
-	'src/sfml/network.cpp']))
+NEED_CYTHON = not all(map(os.path.exists, sources.values()))
 
 try:
 	USE_CYTHON = NEED_CYTHON or bool(int(os.environ.get('USE_CYTHON', 0)))
@@ -72,20 +74,7 @@ except ValueError:
 	USE_CYTHON = NEED_CYTHON or bool(os.environ.get('USE_CYTHON'))
 
 if USE_CYTHON:
-	x11_source = 'src/sfml/x11.pyx'
-	system_source = 'src/sfml/system.pyx'
-	window_source = 'src/sfml/window.pyx'
-	graphics_source = 'src/sfml/graphics.pyx'
-	audio_source = 'src/sfml/audio.pyx'
-	network_source = 'src/sfml/network.pyx'
-
-else:
-	x11_source = 'src/sfml/x11.cpp'
-	system_source = 'src/sfml/system.cpp'
-	window_source = 'src/sfml/window.cpp'
-	graphics_source = 'src/sfml/graphics.cpp'
-	audio_source = 'src/sfml/audio.cpp'
-	network_source = 'src/sfml/network.cpp'
+	sources = {k: v.replace('cpp', 'pyx') for k, v in sources.items()}
 
 extension = lambda name, files, libs: Extension(
 	'sfml.' + name,
@@ -93,30 +82,30 @@ extension = lambda name, files, libs: Extension(
 	['include', 'src/sfml'], language='c++',
 	libraries=libs)
 
-x11 = extension('x11', [x11_source], ['X11'])
+x11 = extension('x11', [sources['x11']], ['X11'])
 
 system = extension(
 	'system',
-	[system_source, 'src/sfml/error.cpp'],
+	[sources['system'], 'src/sfml/error.cpp'],
 	['sfml-system', 'sfml-graphics'])
 
 window = extension(
-	'window', [window_source, 'src/sfml/derivablewindow.cpp'],
+	'window', [sources['window'], 'src/sfml/derivablewindow.cpp'],
 	['sfml-system', 'sfml-window'])
 
 graphics = extension(
 	'graphics',
-	[graphics_source, 'src/sfml/derivablerenderwindow.cpp', 'src/sfml/derivabledrawable.cpp'],
+	[sources['graphics'], 'src/sfml/derivablerenderwindow.cpp', 'src/sfml/derivabledrawable.cpp'],
 	['sfml-system', 'sfml-window', 'sfml-graphics'])
 
 audio = extension(
 	'audio',
-	[audio_source, 'src/sfml/derivablesoundrecorder.cpp', 'src/sfml/derivablesoundstream.cpp'],
+	[sources['audio'], 'src/sfml/derivablesoundrecorder.cpp', 'src/sfml/derivablesoundstream.cpp'],
 	['sfml-system', 'sfml-audio'])
 
 network = extension(
 	'network',
-	[network_source],
+	[sources['network']],
 	['sfml-system', 'sfml-network'])
 
 
@@ -144,10 +133,8 @@ files = [(k.replace('include', include_dir), v) for k, v in files.items()]
 with open('README.rst', 'r') as f:
 	long_description = f.read()
 
-if platform.system() == 'Windows':
-	ext_modules=[system, window, graphics, audio, network]
-else:
-	ext_modules=[x11, system, window, graphics, audio, network]
+ext_modules=[x11, system, window, graphics, audio, network]
+if platform.system() == 'Windows': ext_modules.pop(x11)
 
 kwargs = dict(
 			name='pySFML',
