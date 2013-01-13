@@ -12,6 +12,7 @@
 import sys
 import os
 import platform
+from glob import glob
 from subprocess import call
 from distutils.core import setup, Command, Extension
 
@@ -31,7 +32,6 @@ class PyTest(Command):
 try:
 	from Cython.Distutils import build_ext as Cython
 except ImportError:
-	from glob import glob
 	class Cython(Command):
 		""" Minimal command that runs 'cython' from the command line,
 			rather than importing the version-specific distutils module
@@ -125,33 +125,21 @@ network = extension(
 # on Unix:    /usr/include/pythonX.Y/sfml/*.pxd and *.h
 
 # define the include directory
+headers = glob('src/sfml/*.c')
 if platform.system() == 'Windows':
-	include_dir = sys.prefix + "\\include\\pysfml\\"
+	include_dir = os.path.join(sys.prefix, 'include', 'pysfml')
+	headers.pop('x11.h')
 else:
 	major, minor, _, _ , _ = sys.version_info
-	include_dir = sys.prefix + "/include/python{0}.{1}/pysfml/".format(major, minor)
+	include_dir = os.path.join(
+		sys.prefix, 'include', 'python{0}.{1}'.format(major, minor), 'pysfml')
 
 # list all relevant headers (find in include/ and src/sfml/)
 # key: directory, value: list of headers to place in the directory
-destinations = dict()
-
-for path, subdirs, files in os.walk("include"):
-	# don't forget to remove include/ from the path
-	destination = include_dir + path[8:]
-	destinations[destination] = []
-
-	for name in files:
-		destinations[destination].append(os.path.join(path, name))
-
-for path, subdirs, files in os.walk("src/sfml"):
-	for name in files:
-		if name.endswith(".h"):
-			destinations[include_dir].append(os.path.join(path, name))
-
-# format data (list of tuple)
-data_files = []
-for key in destinations:
-	data_files.append((key, destinations[key]))
+files = {root: [os.path.join(root, fname) for fname in fnames]
+		 for root, dirs, fnames in os.walk('include')}
+files['include'] += glob('src/sfml/*.h')
+files = [(k.replace('include', include_dir), v) for k, v in files.items()]
 
 with open('README.rst', 'r') as f:
 	long_description = f.read()
@@ -166,7 +154,7 @@ kwargs = dict(
 			ext_modules=ext_modules,
 			package_dir={'': 'src'},
 			packages=['sfml'],
-			data_files=data_files,
+			data_files=files,
 			version='1.2.0',
 			description='Python bindings for SFML',
 			long_description=long_description,
