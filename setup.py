@@ -114,7 +114,7 @@ network = extension(
 # on Unix:    /usr/include/pythonX.Y/sfml/*.pxd and *.h
 
 # define the include directory
-headers = glob('src/sfml/*.c')
+headers = glob('src/sfml/*.h')
 if platform.system() == 'Windows':
 	include_dir = os.path.join(sys.prefix, 'include', 'pysfml')
 	headers.pop('x11.h')
