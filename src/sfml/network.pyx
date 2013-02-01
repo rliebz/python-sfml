@@ -653,25 +653,28 @@ cdef class Ftp:
 			
 		return wrap_ftpresponse(response)
 
+from libcpp.map cimport map
 
 cdef class HttpRequest:
 	GET = dnetwork.http.request.Get
 	POST = dnetwork.http.request.Post
 	HEAD = dnetwork.http.request.Head
-
+	
 	cdef dnetwork.http.Request *p_this
+	cdef public dict field
 
 	def __init__(self, bytes uri=b"/", dnetwork.http.request.Method method=dnetwork.http.request.Get, bytes body=b""):
 		self.p_this = new dnetwork.http.Request(string(uri), method, string(body))
+		self.field = dict()
 
 	def __dealloc__(self):
 		del self.p_this
 		
-	property field:
-		def __set__(self, tuple v):
-			cdef bytes field = v[0]
-			cdef bytes value = v[1]
-			self.p_this.setField(string(field), string(value))
+	#property field:
+		#def __set__(self, tuple v):
+			#cdef bytes field = v[0]
+			#cdef bytes value = v[1]
+			#self.p_this.setField(string(field), string(value))
 
 	property method:
 		def __set__(self, dnetwork.http.request.Method method):
@@ -691,6 +694,18 @@ cdef class HttpRequest:
 		def __set__(self, bytes body):
 			self.p_this.setBody(string(body))
 
+	cdef update(self):
+		
+		cdef char* key_string
+		cdef char* value_string	
+
+		cdef Windows
+		for key, value in self.field.items():
+			temp_key = key.encode('UTF-8')
+			key_string = temp_key
+			temp_string = value.encode('UTF-8')
+			value_string = temp_string
+			self.p_this.setField(key_string, value_string)
 
 cdef class HttpResponse:
 	OK = dnetwork.http.response.Ok
@@ -760,6 +775,9 @@ cdef class Http:
 
 	def send_request(self, HttpRequest request, Time timeout=None):
 		cdef dnetwork.http.Response* p = new dnetwork.http.Response()
+		
+		# update fields
+		request.update()
 		
 		if not timeout: 
 			with nogil: p[0] = self.p_this.sendRequest(request.p_this[0])
