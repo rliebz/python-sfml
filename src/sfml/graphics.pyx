@@ -385,8 +385,14 @@ cdef Transformable wrap_transformable(sf.Transformable *p):
 cdef public class Image[type PyImageType, object PyImageObject]:
 	cdef sf.Image *p_this
 
-	def __init__(self):
-		raise UserWarning("Use a specific constructor")
+	def __init__(self, size=(0, 0), Color color=None):
+		self.p_this = new sf.Image()
+
+		if not color:
+			self.size = size
+		else:
+			x, y = size
+			self.p_this.create(<unsigned int>x, <unsigned int>y, color.p_this[0])
 
 	def __dealloc__(self):
 		del self.p_this
@@ -407,20 +413,6 @@ cdef public class Image[type PyImageType, object PyImageObject]:
 	def __deepcopy__(self):
 		cdef sf.Image *p = new sf.Image()
 		p[0] = self.p_this[0]
-		return wrap_image(p)
-
-	@classmethod
-	def create(cls, unsigned int width, unsigned int height, Color color=None):
-		cdef sf.Image *p = new sf.Image()
-		if not color: p.create(width, height)
-		else: p.create(width, height, color.p_this[0])
-		return wrap_image(p)
-
-	@classmethod
-	def from_size(cls, unsigned int width, unsigned int height, Color color=None):
-		cdef sf.Image *p = new sf.Image()
-		if not color: p.create(width, height)
-		else: p.create(width, height, color.p_this[0])
 		return wrap_image(p)
 
 	@classmethod
@@ -470,13 +462,23 @@ cdef public class Image[type PyImageType, object PyImageObject]:
 		def __get__(self):
 			return Vector2(self.p_this.getSize().x, self.p_this.getSize().y)
 
+		def __set__(self, size):
+			x, y = size
+			self.p_this.create(x, y)
+
 	property width:
 		def __get__(self):
 			return self.size.x
 
+		def __set__(self, width):
+			self.size = (width, self.height)
+
 	property height:
 		def __get__(self):
 			return self.size.y
+
+		def __set__(self, height):
+			self.size = (height, self.width)
 
 	def create_mask_from_color(self, Color color, Uint8 alpha=0):
 		self.p_this.createMaskFromColor(color.p_this[0], alpha)
@@ -519,10 +521,13 @@ cdef public class Texture[type PyTextureType, object PyTextureObject]:
 	PIXELS = sf.texture.Pixels
 
 	cdef sf.Texture *p_this
-	cdef bint               delete_this
+	cdef bint        delete_this
 
-	def __init__(self):
-		raise UserWarning("Use a specific constructor")
+	def __cinit__(self, size=(0, 0)):
+		self.p_this = new sf.Texture()
+		self.delete_this = True
+
+		self.size = size
 
 	def __dealloc__(self):
 		if self.delete_this: del self.p_this
@@ -539,26 +544,6 @@ cdef public class Texture[type PyTextureType, object PyTextureObject]:
 
 	def draw(self, RenderTarget target, states):
 		target.p_rendertarget.draw((<sf.Drawable*>self.p_this)[0])
-
-	@classmethod
-	def create(cls, unsigned int width, unsigned int height):
-		cdef sf.Texture *p = new sf.Texture()
-
-		if p.create(width, height):
-			return wrap_texture(p)
-
-		del p
-		raise ValueError(popLastErrorMessage())
-
-	@classmethod
-	def from_size(cls, unsigned int width, unsigned int height):
-		cdef sf.Texture *p = new sf.Texture()
-
-		if p.create(width, height):
-			return wrap_texture(p)
-
-		del p
-		raise ValueError(popLastErrorMessage())
 
 	@classmethod
 	def from_file(cls, filename, area=None):
@@ -608,21 +593,22 @@ cdef public class Texture[type PyTextureType, object PyTextureObject]:
 			return Vector2(self.p_this.getSize().x, self.p_this.getSize().y)
 
 		def __set__(self, size):
-			raise NotImplemented
+			x, y = size
+			self.p_this.create(x, y)
 
 	property width:
 		def __get__(self):
 			return self.size.x
 
 		def __set__(self, width):
-			raise NotImplemented
+			self.size = (width, self.height)
 
 	property height:
 		def __get__(self):
 			return self.size.y
 
 		def __set__(self, height):
-			raise NotImplemented
+			self.size = (self.width, height)
 
 	def copy_to_image(self):
 		cdef sf.Image *p = new sf.Image()
@@ -1888,18 +1874,42 @@ cdef class RenderWindow(Window):
 
 cdef class RenderTexture(RenderTarget):
 	cdef sf.RenderTexture *p_this
-	cdef Texture                  m_texture
+	cdef bint              m_depth_buffer
+	cdef Texture           m_texture
 
-	def __init__(self, unsigned int width, unsigned int height, bint depthBuffer=False):
+	def __init__(self, size=(0, 0), bint depthBuffer=False):
 		self.p_this = new sf.RenderTexture()
+		self.m_depth_buffer = depthBuffer
 		self.p_rendertarget = <sf.RenderTarget*>self.p_this
 
-		self.p_this.create(width, height, depthBuffer)
+		self.size = size
 
 		self.m_texture = wrap_texture(<sf.Texture*>&self.p_this.getTexture(), False)
 
 	def __dealloc__(self):
 		del self.p_this
+
+	property size:
+		def __get__(self):
+			return RenderTarget.size.__get__(self)
+
+		def __set__(self, size):
+			x, y = size
+			self.p_this.create(x, y, self.m_depth_buffer)
+
+	property width:
+		def __get__(self):
+			return RenderTarget.width.__get__(self)
+
+		def __set__(self, width):
+			self.size = (width, self.height)
+
+	property height:
+		def __get__(self):
+			return RenderTarget.height.__get__(self)
+
+		def __set__(self, height):
+			self.size = (height, self.width)
 
 	property smooth:
 		def __get__(self):
@@ -1907,6 +1917,15 @@ cdef class RenderTexture(RenderTarget):
 
 		def __set__(self, bint smooth):
 			self.p_this.setSmooth(smooth)
+
+	property depth_buffer:
+		def __get__(self):
+			return self.m_depth_buffer
+
+		def __set__(self, bint depth_buffer):
+			if self.m_depth_buffer != depth_buffer:
+				self.m_depth_buffer = depth_buffer
+				self.size = self.size
 
 	property active:
 		def __set__(self, bint active):
