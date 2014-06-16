@@ -83,13 +83,3 @@ Table of Contents
 
 .. _SFML: http://www.sfml-dev.org/
 .. _LGPLv3: http://www.gnu.org/copyleft/lgpl.html
-.. _official Python bindings: https://github.com/bastienleonard/pysfml2-cython
-
-
-Next Version
-------------
-Version 1.4.0 will concentrate on fixing bugs In addition, it will be the first
-version to `officially
-support Mac OS X`_.
-
-.. _officially support Mac OS X: http://github.com/Sonkun/python-sfml/issues/44

@@ -91,5 +91,14 @@ v1.2 -> v1.3 (based on SFML2)
 * Removed SFMLException and replaced with the standard ones
 * Removed vsync and visibility trackers from sf.Window
 
+v1.3 -> v2.1
+------------
+* SFGUI and Thor bindings are now complete and come along
+* Remove unofficial example spacial_music
+* Fixed bug window.size not modifiable
+* Tutorials are completed
+* Removed incomplete unit tests
+* Added support for Mac OS X
+
 .. [#] E.g: **Do not use** sf.Texture.load_from_file(filename) but **sf.Texture.from_file(filename)** instead.
 .. [#] E.g: **Do not use** sf.Texture.image.save_to_file() but **sf.Texture.to_image().to_file()** .
