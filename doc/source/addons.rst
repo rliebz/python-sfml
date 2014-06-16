@@ -25,3 +25,13 @@ For complete examples and documentation, please visit the `pyThor project page`_
 
 .. _sfeMovie project page: http://sfemovie.python-sfml.org
 .. _pyThor project page: http://thor.python-sfml.org
+
+SFGUI
+-----
+This add-on allows you to use the SFGUI library in Python
+
+For complete examples and documentation, please visit the `sfgui project page`_.
+
+.. _sfeMovie project page: http://sfemovie.python-sfml.org
+.. _pyThor project page: http://thor.python-sfml.org
+.. _sfgui project page: http://sfgui.python-sfml.org
