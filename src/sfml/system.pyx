@@ -152,7 +152,7 @@ cdef public class Vector2[type PyVector2Type, object PyVector2Object]:
 
     # Todo: I couldn't get the / operator working and as a workaround, I
     # reimplemented the logic in Python (I have to report this bug)
-    def __truediv__(Vector2 self, other):
+    def __div__(Vector2 self, other):
         return Vector2(self.x / other, self.y / other)
 
     def __iadd__(Vector2 self, other):
@@ -180,7 +180,7 @@ cdef public class Vector2[type PyVector2Type, object PyVector2Object]:
 
     # Todo: I couldn't get the =/ operator working and as a workaround, I
     # reimplemented the logic in Python (I have to report this bug)
-    def __itruediv__(Vector2 self, other):
+    def __idiv__(Vector2 self, other):
         self.x /= other
         self.y /= other
 
@@ -313,7 +313,7 @@ cdef public class Vector3[type PyVector3Type, object PyVector3Object]:
 
     # Todo: I couldn't get the / operator working and as a workaround, I
     # reimplemented the logic in Python (I have to report this bug)
-    def __truediv__(Vector3 self, other):
+    def __div__(Vector3 self, other):
         return Vector3(self.x / other, self.y / other, self.z / other)
 
     def __iadd__(Vector3 self, other):
@@ -341,7 +341,7 @@ cdef public class Vector3[type PyVector3Type, object PyVector3Object]:
 
     # Todo: I couldn't get the =/ operator working and as a workaround, I
     # reimplemented the logic in Python (I have to report this bug)
-    def __itruediv__(Vector3 self, other):
+    def __idiv__(Vector3 self, other):
         self.x /= other
         self.y /= other
         self.z /= other
