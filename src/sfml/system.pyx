@@ -24,6 +24,8 @@
 
 from __future__ import division
 
+import codecs
+
 cimport cython
 
 from libcpp.string cimport string
@@ -70,6 +72,7 @@ cdef api sf.String to_string(object string):
 
     string = string + "\0"
     string = string.encode("utf-32")
+    string = string.replace(codecs.BOM_UTF32, "")
 
     cstring = PyString_AsString(string)
     return sf.String(<Uint32*>cstring)
