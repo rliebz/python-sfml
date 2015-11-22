@@ -1,8 +1,10 @@
-import sys, os, platform
-import os.path, shutil
 from glob import glob
-from subprocess import call
-from distutils.core import setup, Command, Extension
+import platform
+import os
+import shutil
+import sys
+
+from distutils.core import setup, Extension
 
 try:
     from Cython.Distutils import build_ext
@@ -11,9 +13,10 @@ except ImportError:
     raise SystemExit
 
 if platform.architecture()[0] == "32bit":
-	arch = "x86"
+    arch = "x86"
 elif platform.architecture()[0] == "64bit":
-	arch = "x64"
+    arch = "x64"
+
 
 class CythonBuildExt(build_ext):
     """ Updated version of cython build_ext command to move
@@ -79,7 +82,7 @@ if platform.system() == 'Windows':
         language='c++',
         libraries=libs,
         extra_compile_args=['-fpermissive']
-        )
+    )
 else:
     extension = lambda name, files, libs: Extension(
         name='sfml.' + name,
@@ -89,7 +92,7 @@ else:
         language='c++',
         libraries=libs,
         extra_compile_args=['-fpermissive']
-        )
+    )
 
 system = extension(
     'system',
@@ -115,7 +118,7 @@ network = extension(
     [sources['network']],
     ['sfml-system', 'sfml-network'])
 
-major, minor, _, _ , _ = sys.version_info
+major, minor, _, _, _ = sys.version_info
 
 files = []
 
@@ -132,7 +135,7 @@ c_api_headers.append(os.path.join(include_path, 'audio_api.h'))
 
 if platform.system() == 'Windows':
     # On Windows: C:\Python27\include\pysfml\*_api.h
-    files = [(sys.exec_prefix +'\\include\\pysfml', c_api_headers)]
+    files = [(sys.exec_prefix + '\\include\\pysfml', c_api_headers)]
 else:
     # On Unix: /usr/local/include/pysfml/*_api.h
     files = [(sys.exec_prefix + '/include/pysfml', c_api_headers)]
@@ -144,30 +147,33 @@ if platform.system() == 'Windows':
 with open('README.rst', 'r') as f:
     long_description = f.read()
 
-ext_modules=[system, window, graphics, audio, network]
+ext_modules = [system, window, graphics, audio, network]
 
 kwargs = dict(
-            name='pySFML',
-            ext_modules=ext_modules,
-            package_dir={'': 'src'},
-            packages=['sfml'],
-            data_files=files,
-            version='2.2.0',
-            description='Python bindings for SFML',
-            long_description=long_description,
-            author='Jonathan de Wachter, Edwin O Marshall',
-            author_email='dewachter.jonathan@gmail.com, emarshall85@gmail.com',
-            url='http://python-sfml.org',
-            classifiers=['Development Status :: 5 - Production/Stable',
-                        'Intended Audience :: Developers',
-                        'License :: OSI Approved :: zlib/libpng License',
-                        'Operating System :: OS Independent',
-                        'Programming Language :: Cython',
-                        'Programming Language :: C++',
-                        'Programming Language :: Python',
-                        'Topic :: Games/Entertainment',
-                        'Topic :: Multimedia',
-                        'Topic :: Software Development :: Libraries :: Python Modules'],
-            cmdclass={'build_ext': CythonBuildExt})
+    name='pySFML',
+    ext_modules=ext_modules,
+    package_dir={'': 'src'},
+    packages=['sfml'],
+    data_files=files,
+    version='2.2.0',
+    description='Python bindings for SFML',
+    long_description=long_description,
+    author='Jonathan de Wachter, Edwin O Marshall',
+    author_email='dewachter.jonathan@gmail.com, emarshall85@gmail.com',
+    url='http://python-sfml.org',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: zlib/libpng License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Cython',
+        'Programming Language :: C++',
+        'Programming Language :: Python',
+        'Topic :: Games/Entertainment',
+        'Topic :: Multimedia',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+    ],
+    cmdclass={'build_ext': CythonBuildExt}
+)
 
 setup(**kwargs)
